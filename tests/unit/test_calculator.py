@@ -258,3 +258,9 @@ def test_modulus(a: Number, b: Number, expected: float) -> None:
     
     # Assert that the result of modulus(a, b) matches the expected value
     assert result == expected, f"Expected modulus({a}, {b}) to be {expected}, but got {result}"
+
+
+def test_modulus_by_zero() -> None:
+    with pytest.raises(ValueError) as excinfo:
+        modulus(10, 0)
+    assert "Cannot divide by zero!" in str(excinfo.value)

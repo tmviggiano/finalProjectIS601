@@ -10,6 +10,7 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
+from uuid import uuid4
 
 from app.models.user import User
 from tests.conftest import create_fake_user, managed_db_session
@@ -325,3 +326,33 @@ def test_error_handling():
             session.execute(text("INVALID SQL"))
     assert "INVALID SQL" in str(exc_info.value)
 
+def test_init_with_hashed_password_kwarg(db_session):
+    """User.__init__ remaps 'hashed_password' kwarg to 'password'."""
+    hashed = User.hash_password("TestPass123!")
+    user = User(
+        first_name="Hash",
+        last_name="Test",
+        email=f"hashtest_{uuid4().hex[:6]}@example.com",
+        username=f"hashtest_{uuid4().hex[:6]}",
+        hashed_password=hashed
+    )
+    assert user.password == hashed
+
+def test_update_method_changes_attributes(db_session, test_user):
+    """User.update() sets attributes and refreshes updated_at."""
+    original_time = test_user.updated_at
+    test_user.update(first_name="Updated")
+    assert test_user.first_name == "Updated"
+    assert test_user.updated_at >= original_time
+
+def test_hashed_password_property(db_session):
+    """hashed_password property returns the stored password value."""
+    hashed = User.hash_password("TestPass123!")
+    user = User(
+        first_name="Prop",
+        last_name="Test",
+        email=f"proptest_{uuid4().hex[:6]}@example.com",
+        username=f"proptest_{uuid4().hex[:6]}",
+        password=hashed
+    )
+    assert user.hashed_password == hashed

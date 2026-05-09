@@ -4,6 +4,7 @@ import uuid
 from app.models.calculation import (
     Calculation,
     Addition,
+    Modulus,
     Subtraction,
     Multiplication,
     Division,
@@ -150,3 +151,90 @@ def test_invalid_inputs_for_division():
     division = Division(user_id=dummy_user_id(), inputs=[10])
     with pytest.raises(ValueError, match="Inputs must be a list with at least two numbers."):
         division.get_result()
+def test_calculation_factory_modulus():
+    """
+    Test the Calculation.create factory method for Modulus.
+    """
+    inputs = [10, 4]
+    calc = Calculation.create(
+        calculation_type='modulus',
+        user_id=dummy_user_id(),
+        inputs=inputs,
+    )
+    # Expected: 10 % 4 = 2
+    assert isinstance(calc, Modulus), "Factory did not return a Modulus instance."
+    assert calc.get_result() == 2, "Incorrect Modulus result."
+
+from app.models.calculation import Modulus
+
+def test_base_get_result_raises_not_implemented():
+    calc = Calculation(user_id=dummy_user_id(), inputs=[1, 2])
+    with pytest.raises(NotImplementedError):
+        calc.get_result()
+
+def test_base_repr():
+    calc = Calculation(user_id=dummy_user_id(), inputs=[1, 2], type="addition")
+    assert "Calculation" in repr(calc)
+
+def test_addition_non_list_inputs_raises():
+    calc = Addition(user_id=dummy_user_id(), inputs="bad")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        calc.get_result()
+
+def test_addition_too_few_inputs_raises():
+    calc = Addition(user_id=dummy_user_id(), inputs=[5])
+    with pytest.raises(ValueError, match="at least two numbers"):
+        calc.get_result()
+
+def test_subtraction_non_list_inputs_raises():
+    calc = Subtraction(user_id=dummy_user_id(), inputs=42)
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        calc.get_result()
+
+def test_subtraction_too_few_inputs_raises():
+    calc = Subtraction(user_id=dummy_user_id(), inputs=[5])
+    with pytest.raises(ValueError, match="at least two numbers"):
+        calc.get_result()
+
+def test_multiplication_non_list_inputs_raises():
+    calc = Multiplication(user_id=dummy_user_id(), inputs="bad")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        calc.get_result()
+
+def test_multiplication_too_few_inputs_raises():
+    calc = Multiplication(user_id=dummy_user_id(), inputs=[3])
+    with pytest.raises(ValueError, match="at least two numbers"):
+        calc.get_result()
+
+def test_division_non_list_inputs_raises():
+    calc = Division(user_id=dummy_user_id(), inputs="bad")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        calc.get_result()
+
+def test_modulus_get_result():
+    calc = Modulus(user_id=dummy_user_id(), inputs=[10, 3])
+    assert calc.get_result() == 1.0
+
+def test_modulus_non_list_inputs_raises():
+    calc = Modulus(user_id=dummy_user_id(), inputs="bad")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        calc.get_result()
+
+def test_modulus_too_few_inputs_raises():
+    calc = Modulus(user_id=dummy_user_id(), inputs=[5])
+    with pytest.raises(ValueError, match="at least two numbers"):
+        calc.get_result()
+
+def test_modulus_by_zero_raises():
+    calc = Modulus(user_id=dummy_user_id(), inputs=[10, 0])
+    with pytest.raises(ValueError, match="Cannot divide by zero."):
+        calc.get_result()
+
+def test_modulus_chained_result():
+    calc = Modulus(user_id=dummy_user_id(), inputs=[17, 5, 3])
+    assert calc.get_result() == 2.0
+
+def test_calculation_factory_modulus():
+    calc = Calculation.create(calculation_type="modulus", user_id=dummy_user_id(), inputs=[10, 3])
+    assert isinstance(calc, Modulus)
+    assert calc.get_result() == 1.0

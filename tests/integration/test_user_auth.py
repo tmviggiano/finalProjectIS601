@@ -5,6 +5,7 @@ from uuid import UUID
 import pydantic_core
 from sqlalchemy.exc import IntegrityError
 from app.models.user import User
+from pydantic import ValidationError
 
 def test_password_hashing(db_session, fake_user_data):
     """Test password hashing and verification functionality"""
@@ -194,3 +195,63 @@ def test_missing_password_registration(db_session):
     # Adjust the expected error message
     with pytest.raises(ValueError, match="Password must be at least 6 characters long"):
         User.register(db_session, test_data)
+
+from jose import jwt
+from app.core.config import settings
+from app.schemas.user import UserCreate, PasswordUpdate
+
+def test_verify_token_with_missing_sub():
+    """JWT payload has no 'sub' field — verify_token should return None."""
+    token = jwt.encode(
+        {"data": "no_sub_here"},
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.ALGORITHM
+    )
+    result = User.verify_token(token)
+    assert result is None
+
+def test_verify_token_with_non_uuid_sub():
+    """JWT 'sub' is not a valid UUID — verify_token should return None."""
+    token = jwt.encode(
+        {"sub": "not-a-uuid"},
+        settings.JWT_SECRET_KEY,
+        algorithm=settings.ALGORITHM
+    )
+    result = User.verify_token(token)
+    assert result is None
+
+def test_password_missing_uppercase_raises():
+    with pytest.raises(ValidationError, match="uppercase"):
+        UserCreate(first_name="T", last_name="U", email="t@t.com",
+                   username="tuser", password="alllower1!", confirm_password="alllower1!")
+
+def test_password_missing_lowercase_raises():
+    with pytest.raises(ValidationError, match="lowercase"):
+        UserCreate(first_name="T", last_name="U", email="t@t.com",
+                   username="tuser", password="ALLUPPER1!", confirm_password="ALLUPPER1!")
+
+def test_password_missing_digit_raises():
+    with pytest.raises(ValidationError, match="digit"):
+        UserCreate(first_name="T", last_name="U", email="t@t.com",
+                   username="tuser", password="NoDigits!!", confirm_password="NoDigits!!")
+
+def test_password_missing_special_char_raises():
+    with pytest.raises(ValidationError, match="special character"):
+        UserCreate(first_name="T", last_name="U", email="t@t.com",
+                   username="tuser", password="NoSpecial1", confirm_password="NoSpecial1")
+
+def test_password_update_new_same_as_current_raises():
+    with pytest.raises(ValidationError, match="different from current"):
+        PasswordUpdate(
+            current_password="SecurePass123!",
+            new_password="SecurePass123!",
+            confirm_new_password="SecurePass123!"
+        )
+
+def test_password_update_confirm_mismatch_raises():
+    with pytest.raises(ValidationError, match="do not match"):
+        PasswordUpdate(
+            current_password="OldPass123!",
+            new_password="NewPass123!",
+            confirm_new_password="DifferentPass123!"
+        )

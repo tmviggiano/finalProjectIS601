@@ -5,7 +5,8 @@ from datetime import datetime
 from app.schemas.calculation import (
     CalculationCreate,
     CalculationUpdate,
-    CalculationResponse
+    CalculationResponse,
+    CalculationBase
 )
 
 def test_calculation_create_valid():
@@ -97,3 +98,15 @@ def test_calculation_response_valid():
     assert calc_response.type == "subtraction"
     assert calc_response.inputs == [20, 5]
     assert calc_response.result == 15.5
+
+
+
+def test_calculation_base_fewer_than_two_inputs_raises():
+    with pytest.raises(ValidationError) as exc_info:
+        CalculationBase(type="addition", inputs=[5])
+    assert "list should have at least" in str(exc_info.value).lower()
+
+def test_calculation_update_fewer_than_two_inputs_raises():
+    with pytest.raises(ValidationError) as exc_info:
+        CalculationUpdate(inputs=[5])
+    assert "list should have at least" in str(exc_info.value).lower()

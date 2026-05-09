@@ -318,3 +318,130 @@ def test_model_division():
     with pytest.raises(ValueError):
         calc_zero = Calculation.create("division", dummy_user_id, [100, 0])
         calc_zero.get_result()
+
+
+# ---------------------------------------------------------------------------
+# Modulus Feature Tests
+# ---------------------------------------------------------------------------
+
+def test_create_calculation_modulus(base_url: str):
+    """Test creating a modulus calculation via the API."""
+    user_data = {
+        "first_name": "Calc",
+        "last_name": "Modulus",
+        "email": f"calc.mod{uuid4()}@example.com",
+        "username": f"calc_mod_{uuid4()}",
+        "password": "SecurePass123!",
+        "confirm_password": "SecurePass123!"
+    }
+    token_data = register_and_login(base_url, user_data)
+    headers = {"Authorization": f"Bearer {token_data['access_token']}"}
+    
+    response = requests.post(f"{base_url}/calculations",
+        json={"type": "modulus", "inputs": [10, 3]},
+        headers=headers
+    )
+    assert response.status_code == 201, f"Modulus creation failed: {response.text}"
+    data = response.json()
+    assert data["type"] == "modulus"
+    assert data["result"] == 1.0, f"Expected 1.0, got {data['result']}"
+
+def test_modulus_chained_inputs(base_url: str):
+    """Test modulus with more than two inputs chains left-to-right."""
+    user_data = {
+        "first_name": "Calc",
+        "last_name": "ModChain",
+        "email": f"calc.modchain{uuid4()}@example.com",
+        "username": f"calc_modchain_{uuid4()}",
+        "password": "SecurePass123!",
+        "confirm_password": "SecurePass123!"
+    }
+    token_data = register_and_login(base_url, user_data)
+    headers = {"Authorization": f"Bearer {token_data['access_token']}"}
+
+    response = requests.post(f"{base_url}/calculations",
+        json={"type": "modulus", "inputs": [17, 5, 3]},
+        headers=headers
+    )
+    assert response.status_code == 201, f"Chained modulus failed: {response.text}"
+    # 17 % 5 = 2, then 2 % 3 = 2
+    assert response.json()["result"] == 2.0
+
+def test_modulus_by_zero_returns_422(base_url: str):
+    """Test that modulus with a zero divisor is rejected by the schema."""
+    user_data = {
+        "first_name": "Calc",
+        "last_name": "ModZero",
+        "email": f"calc.modzero{uuid4()}@example.com",
+        "username": f"calc_modzero_{uuid4()}",
+        "password": "SecurePass123!",
+        "confirm_password": "SecurePass123!"
+    }
+    token_data = register_and_login(base_url, user_data)
+    headers = {"Authorization": f"Bearer {token_data['access_token']}"}
+
+    response = requests.post(f"{base_url}/calculations",
+        json={"type": "modulus", "inputs": [10, 0]},
+        headers=headers
+    )
+    # Schema doesn't block modulus-by-zero (only division), so model raises 400
+    assert response.status_code in (400, 422), \
+        f"Expected 400 or 422 for modulus by zero, got {response.status_code}"
+
+def test_modulus_full_bread(base_url: str):
+    """Test full BREAD flow for a modulus calculation."""
+    user_data = {
+        "first_name": "Calc",
+        "last_name": "ModBread",
+        "email": f"calc.modbread{uuid4()}@example.com",
+        "username": f"calc_modbread_{uuid4()}",
+        "password": "SecurePass123!",
+        "confirm_password": "SecurePass123!"
+    }
+    token_data = register_and_login(base_url, user_data)
+    headers = {"Authorization": f"Bearer {token_data['access_token']}"}
+
+    # Create
+    create_resp = requests.post(f"{base_url}/calculations",
+        json={"type": "modulus", "inputs": [10, 3]},
+        headers=headers
+    )
+    assert create_resp.status_code == 201
+    calc_id = create_resp.json()["id"]
+
+    # Read
+    get_resp = requests.get(f"{base_url}/calculations/{calc_id}", headers=headers)
+    assert get_resp.status_code == 200
+    assert get_resp.json()["result"] == 1.0
+
+    # Update
+    update_resp = requests.put(f"{base_url}/calculations/{calc_id}",
+        json={"inputs": [20, 6]},
+        headers=headers
+    )
+    assert update_resp.status_code == 200
+    assert update_resp.json()["result"] == 2.0  # 20 % 6 = 2
+
+    # Delete
+    delete_resp = requests.delete(f"{base_url}/calculations/{calc_id}", headers=headers)
+    assert delete_resp.status_code == 204
+
+    # Verify gone
+    gone_resp = requests.get(f"{base_url}/calculations/{calc_id}", headers=headers)
+    assert gone_resp.status_code == 404
+
+def test_model_modulus():
+    """Direct model test for modulus calculation."""
+    calc = Calculation.create("modulus", uuid4(), [10, 3])
+    assert calc.get_result() == 1.0
+
+def test_model_modulus_chained():
+    """Direct model test for chained modulus."""
+    calc = Calculation.create("modulus", uuid4(), [17, 5, 3])
+    assert calc.get_result() == 2.0
+
+def test_model_modulus_by_zero():
+    """Direct model test that modulus by zero raises ValueError."""
+    calc = Calculation.create("modulus", uuid4(), [10, 0])
+    with pytest.raises(ValueError, match="Cannot divide by zero."):
+        calc.get_result()
