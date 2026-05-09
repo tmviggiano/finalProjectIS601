@@ -2,7 +2,7 @@
 
 import pytest  # Import the pytest framework for writing and running tests
 from typing import Union  # Import Union for type hinting multiple possible types
-from app.operations import add, subtract, multiply, divide  # Import the calculator functions from the operations module
+from app.operations import add, subtract, multiply, divide, modulus  # Import the calculator functions from the operations module
 
 # Define a type alias for numbers that can be either int or float
 Number = Union[int, float]
@@ -232,3 +232,29 @@ def test_divide_by_zero() -> None:
     # Assert that the exception message contains the expected error message
     assert "Cannot divide by zero!" in str(excinfo.value), \
         f"Expected error message 'Cannot divide by zero!', but got '{excinfo.value}'"
+
+@pytest.mark.parametrize(
+    "a, b, expected",
+    [
+        (6, 3, 0.0),           # Test dividing two positive integers
+        (-6, 3, 0.0),         # Test dividing a negative integer by a positive integer
+        (6.0, 3.0, 0.0),       # Test dividing two positive floats
+        (-6.0, 3.0, 0.0),     # Test dividing a negative float by a positive float
+        (0, 5, 0.0),            #Test dividing zero by a positive integer
+        (10,4,2.0)            
+    ],
+    ids=[
+        "modulus_two_positive_integers",
+        "modulus_negative_integer_by_positive_integer",
+        "modulus_two_positive_floats",
+        "modulus_negative_float_by_positive_float",
+        "modulus_zero_by_positive_integer",
+        "modulus_ten_by_4"
+    ]
+)
+def test_modulus(a: Number, b: Number, expected: float) -> None:
+    # Call the 'modulus' function with the provided arguments
+    result = modulus(a, b)
+    
+    # Assert that the result of modulus(a, b) matches the expected value
+    assert result == expected, f"Expected modulus({a}, {b}) to be {expected}, but got {result}"

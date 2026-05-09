@@ -294,6 +294,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         result = inputs.reduce((a, b, i) => i === 0 ? a : a / b, inputs[0]);
         break;
+      case 'modulus':
+        // Avoid modulo by zero
+        if (inputs.some((value, index) => index > 0 && value === 0)) {
+          return 'Cannot modulo by zero';
+        }
+        result = inputs.slice(1).reduce((a, b) => a % b, inputs[0]);
+        break;
       default:
         return 'Unknown operation';
     }
