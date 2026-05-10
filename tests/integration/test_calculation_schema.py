@@ -110,3 +110,24 @@ def test_calculation_update_fewer_than_two_inputs_raises():
     with pytest.raises(ValidationError) as exc_info:
         CalculationUpdate(inputs=[5])
     assert "list should have at least" in str(exc_info.value).lower()
+
+
+def test_calculation_base_division_by_zero_raises():
+    """
+    Test that CalculationBase rejects a division payload where any divisor is zero.
+    The schema-level validator should catch this before it ever reaches the model.
+    """
+    with pytest.raises(ValidationError) as exc_info:
+        CalculationBase(type="division", inputs=[10, 0])
+    assert "cannot divide by zero" in str(exc_info.value).lower()
+
+
+def test_calculation_base_modulus_by_zero_raises():
+    """
+    Test that CalculationBase rejects a modulus payload where any divisor is zero.
+    Modulus shares the same zero-divisor restriction as division and should be
+    caught at the schema level, not silently deferred to get_result().
+    """
+    with pytest.raises(ValidationError) as exc_info:
+        CalculationBase(type="modulus", inputs=[10, 0])
+    assert "cannot divide by zero" in str(exc_info.value).lower()

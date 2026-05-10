@@ -46,7 +46,7 @@ class CalculationBase(BaseModel):
         """Validate inputs based on calculation type"""
         if len(self.inputs) < 2:
             raise ValueError("At least two numbers are required for calculation")
-        if self.type == CalculationType.DIVISION:
+        if self.type in (CalculationType.DIVISION, CalculationType.MODULUS):
             # Prevent division by zero (skip the first value as numerator)
             if any(x == 0 for x in self.inputs[1:]):
                 raise ValueError("Cannot divide by zero")

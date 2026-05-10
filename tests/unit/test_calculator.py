@@ -241,7 +241,8 @@ def test_divide_by_zero() -> None:
         (6.0, 3.0, 0.0),       # Test dividing two positive floats
         (-6.0, 3.0, 0.0),     # Test dividing a negative float by a positive float
         (0, 5, 0.0),            #Test dividing zero by a positive integer
-        (10,4,2.0)            
+        (10,4,2.0),
+        (10, 3 ,1)      
     ],
     ids=[
         "modulus_two_positive_integers",
@@ -249,7 +250,8 @@ def test_divide_by_zero() -> None:
         "modulus_two_positive_floats",
         "modulus_negative_float_by_positive_float",
         "modulus_zero_by_positive_integer",
-        "modulus_ten_by_4"
+        "modulus_ten_by_4",
+        "modulus_ten_by_3"
     ]
 )
 def test_modulus(a: Number, b: Number, expected: float) -> None:
