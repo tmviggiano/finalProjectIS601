@@ -2,7 +2,7 @@
 
 A full-stack web application built with **FastAPI**, **PostgreSQL**, and **Docker** that allows authenticated users to perform and manage calculations. Features include user registration and JWT-based authentication, a full BREAD interface for calculation history, and support for five operation types including the **Modulus** operation added as the final project feature.
 
-**Docker Hub:** https://hub.docker.com/repository/docker/tomviggiano/601_final/general  
+**Docker Hub:** https://hub.docker.com/repository/docker/tomviggiano/601_finalproject 
 **GitHub:** https://github.com/tmviggiano/finalProjectIS601
 
 ---
